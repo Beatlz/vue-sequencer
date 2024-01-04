@@ -2,7 +2,7 @@ import * as Tone from "tone"
 
 import { getSortedNotes } from "./monterrey"
 
-export interface SequencerSettings {
+export interface SequencerInitSettings {
   tempo?: number
   scale?: string[]
   octaves?: number
@@ -16,23 +16,26 @@ export class Sequencer {
   private _stepLength = 16
   private _notes: string[] = []
   private _isPlaying = false
-  private currentStep = 0
+  private _currentStep = 0
   private loop: Tone.Loop | null = null
-  private _settings: SequencerSettings = {
-    tempo: 120,
-    scale: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
-    octaves: 3,
-    lowOctave: 2,
-    steps: 16,
-  }
+  private _tempo = 120
+  private _scale = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
-  constructor(options?: SequencerSettings) {
-    this.settings = { ...this.settings, ...options }
+  octaves = 3
+  lowOctave = 2
+  steps = 16
+
+  constructor(options?: SequencerInitSettings) {
+    this._tempo = options?.tempo || this.tempo
+    this._scale = options?.scale || this.scale
+    this.octaves = options?.octaves || this.octaves
+    this.lowOctave = options?.lowOctave || this.lowOctave
+    this.steps = options?.steps || this.steps
 
     this.createEmptySequence()
 
     if (options?.sequence) {
-      this.loadSequence(options.sequence)
+      this.sequence = options.sequence
     }
   }
 
@@ -57,46 +60,50 @@ export class Sequencer {
     this._isPlaying = isPlaying
   }
 
-  get settings(): SequencerSettings {
-    return this._settings
-  }
-  set settings(settings: SequencerSettings) {
-    let wasPlaying: boolean = this.isPlaying
-    
-    if (wasPlaying) this.pause()
-    if (settings.scale) this.scale = settings.scale
-    
-    this._settings = settings
-
-    if (wasPlaying) this.play()
-  }
-
   get sequence(): boolean[][] {
     return this._sequence
   }
-  private set sequence(sequence: boolean[][]) {
+  set sequence(sequence: boolean[][]) {
     this._sequence = sequence
+    this.steps = sequence[0].length
+    this.octaves = sequence.length / this.scale!.length
   }
 
+  get scale() {
+    return this._scale
+  }
   set scale(scale: string[]) {
-    const sequence = [...this.sequence]
+    this._scale = scale
+    this.notes = this.getSortedSequence()
+  }
 
-    this.pause()
-    this.settings.scale = scale
-    this.createEmptySequence()
-    this.sequence = sequence
+  get currentStep(): number {
+    return this._currentStep
+  }
+  private set currentStep(step: number)  {
+    this._currentStep = step
+  }
+
+  get tempo(): number {
+    return this._tempo
+  }
+  set tempo(tempo: number) {
+    this._tempo = tempo
+    Tone.Transport.bpm.value = tempo
   }
 
   createEmptySequence(): void {
     this.notes = this.getSortedSequence()
-    this.sequence = this.notes.map(() => Array(this.settings.steps).fill(false))
+    
+    this.clear()
   }
 
-  loadSequence(sequence: boolean[][]): void {
-    this.pause()
-    this.sequence = sequence
-    this.settings.steps = sequence[0].length
-    this.settings.octaves = sequence.length / this.settings.scale!.length
+  getSortedSequence(): string[] {
+    return getSortedNotes(this.scale!, this.octaves!, this.lowOctave!)
+  }
+
+  togglePadValue(noteIndex: number, beat: number): void {
+    this.sequence[noteIndex][beat] = !this.sequence[noteIndex][beat]
   }
 
   play(): void {
@@ -104,7 +111,7 @@ export class Sequencer {
 
     const polySynth = new Tone.PolySynth(Tone.Synth).toDestination()
 
-    Tone.Transport.bpm.value = this.settings.tempo!
+    Tone.Transport.bpm.value = this.tempo!
     Tone.start()
     
     this.loop = new Tone.Loop(time => {
@@ -114,7 +121,7 @@ export class Sequencer {
         }
       })
 
-      this.currentStep = (this.currentStep + 1) % this.settings.steps!
+      this.currentStep = (this.currentStep + 1) % this.steps!
     })
 
     this.loop.start(0)
@@ -133,24 +140,22 @@ export class Sequencer {
     this.isPlaying = false
   }
 
-  getSortedSequence(): string[] {
-    return getSortedNotes(this.settings.scale!, this.settings.octaves!, this.settings.lowOctave!)
+  clear(): void {
+    this.pause()
+    this.sequence = this.notes.map(() => Array(this.steps).fill(false))
   }
 
-  togglePadValue(noteIndex: number, beat: number): void {
-    this.sequence[noteIndex][beat] = !this.sequence[noteIndex][beat]
-  }
-}
-
-class SequencerControls {
-  sequencer: Sequencer
-
-  constructor (sequencer: Sequencer) {
-    this.sequencer = sequencer
+  random(randomThreshold = 0.05): void {
+    for (const note in this.sequence) {
+      this.sequence[note] = new Array(this.steps).fill(false).map(() => Math.random() <= randomThreshold)
+    }
   }
 
-  clear() {
-    this.sequencer.pause()
-    this.sequencer.createEmptySequence()
+  invertX() {
+    this.sequence = this.sequence.map(note => note.reverse())
+  }
+
+  invertY() {
+    this.sequence = this.sequence.map((_, index) => this.sequence[this.sequence.length - index - 1])
   }
 }
