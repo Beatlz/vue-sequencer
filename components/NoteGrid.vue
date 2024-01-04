@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Sequencer } from '~/assets/lib/tsequencer'
-import { type Note } from 'mutsica'
+import { CHORDS, NOTES, type Note } from 'mutsica'
 
 const scale: Note[] = ["A", "B", "C", "D", "E", "F", "G"]
 const sequencer = ref<Sequencer>(new Sequencer({ scale }))
+const root = ref<Note>(scale[0])
+const chords = ref(Object.entries(CHORDS).map(([name, template]) => ({ name, template })))
+const chordNames = computed(() => chords.value.map(chord => chord.name))
 </script>
 
 <template>
@@ -31,6 +34,12 @@ const sequencer = ref<Sequencer>(new Sequencer({ scale }))
     <dark-button text="Invert X" @click="sequencer.invertX()" />
     <dark-button text="Invert Y" @click="sequencer.invertY()" />
     <number-input :default-value="sequencer.tempo" v-model="sequencer.tempo"/>
+  </div>
+  <div class="mt-8">
+    
+  </div>
+  <div>
+    {{ root }}
   </div>
 </template>
 

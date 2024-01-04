@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { initFlowbite } from 'flowbite';
+
 const isMounted = ref(false)
 
 onMounted(() => {
   isMounted.value = true
+  initFlowbite()
 })
 </script>
 
