@@ -1,10 +1,10 @@
 import * as Tone from "tone"
 
-import { getSortedNotes } from "./monterrey"
+import { getSortedNotes, type Note } from "mutsica"
 
 export interface SequencerInitSettings {
   tempo?: number
-  scale?: string[]
+  scale?: Note[]
   octaves?: number
   lowOctave?: number
   steps?: number
@@ -17,9 +17,9 @@ export class Sequencer {
   private _notes: string[] = []
   private _isPlaying = false
   private _currentStep = 0
-  private loop: Tone.Loop | null = null
   private _tempo = 120
-  private _scale = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+  private _scale: Note[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+  private loop: Tone.Loop | null = null
 
   octaves = 3
   lowOctave = 2
@@ -69,10 +69,10 @@ export class Sequencer {
     this.octaves = sequence.length / this.scale!.length
   }
 
-  get scale() {
+  get scale(): Note[] {
     return this._scale
   }
-  set scale(scale: string[]) {
+  set scale(scale: Note[]) {
     this._scale = scale
     this.notes = this.getSortedSequence()
   }

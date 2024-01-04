@@ -6,6 +6,10 @@ export default {
     "./pages/**/*.vue",
     "./plugins/**/*.ts",
     "./nuxt.config.ts",
+    "./node_modules/flowbite/**/*.{js,ts}",
+  ],
+  plugins: [
+    require('flowbite/plugin')
   ],
   theme: {
     extend: {},

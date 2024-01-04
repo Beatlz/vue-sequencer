@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Sequencer } from '~/assets/lib/tsequencer'
+import { type Note } from 'mutsica'
 
-const scale: string[] = ["A", "B", "C", "D", "E", "F", "G"]
+const scale: Note[] = ["A", "B", "C", "D", "E", "F", "G"]
 const sequencer = ref<Sequencer>(new Sequencer({ scale }))
 </script>
 
