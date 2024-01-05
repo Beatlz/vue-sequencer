@@ -9,6 +9,7 @@ export interface SequencerInitSettings {
   lowOctave?: number
   steps?: number
   sequence?: boolean[][]
+  stepLength?: number
 }
 
 export class Sequencer {
@@ -28,6 +29,7 @@ export class Sequencer {
   constructor(options?: SequencerInitSettings) {
     this._tempo = options?.tempo || this.tempo
     this._scale = options?.scale || this.scale
+    this._stepLength = options?.stepLength || 16
     this.octaves = options?.octaves || this.octaves
     this.lowOctave = options?.lowOctave || this.lowOctave
     this.steps = options?.steps || this.steps
@@ -107,7 +109,11 @@ export class Sequencer {
   }
 
   play(): void {
-    if (this.isPlaying) return
+    if (this.isPlaying) {
+      this.pause()
+
+      return
+    }
 
     const polySynth = new Tone.PolySynth(Tone.Synth).toDestination()
 
@@ -121,7 +127,7 @@ export class Sequencer {
         }
       })
 
-      this.currentStep = (this.currentStep + 1) % this.steps!
+      this.currentStep = this.currentStep < this.steps - 1 ? this.currentStep + 1 : 0
     })
 
     this.loop.start(0)

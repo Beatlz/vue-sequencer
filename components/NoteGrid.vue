@@ -1,12 +1,24 @@
 <script setup lang="ts">
+import { NOTES, SCALES, scaleNames, calculateNotes } from 'mutsica'
 import { Sequencer } from '~/assets/lib/tsequencer'
-import { CHORDS, NOTES, type Note } from 'mutsica'
+import { BUTTONS } from '~/assets/style';
 
-const scale: Note[] = ["A", "B", "C", "D", "E", "F", "G"]
-const sequencer = ref<Sequencer>(new Sequencer({ scale }))
-const root = ref<Note>(scale[0])
-const chords = ref(Object.entries(CHORDS).map(([name, template]) => ({ name, template })))
-const chordNames = computed(() => chords.value.map(chord => chord.name))
+const rootIndex = ref(0)
+const scaleIndex = ref(0)
+const root = computed(() => NOTES[rootIndex.value])
+const scale = computed(() => {
+  const scaleName = scaleNames[scaleIndex.value]
+  const template = SCALES[scaleName].template
+
+  return calculateNotes(root.value, template)
+})
+
+const sequencer = ref<Sequencer>(new Sequencer({ scale: scale.value, steps: 32, stepLength: 32 }))
+const s = `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
+
+watch(scale, () => {
+  sequencer.value.scale = scale.value
+})
 </script>
 
 <template>
@@ -19,27 +31,52 @@ const chordNames = computed(() => chords.value.map(chord => chord.name))
         @click="sequencer.togglePadValue(index, step)"
         :id="`${note}_${step}`"
         :key="`pad_${note}_${step}`"
-        :class="{ checked: beatValue }"
-        :style="{ opacity: step === sequencer.currentStep - 1 && sequencer.isPlaying ? 0.7 : 1 }"
+        :class="{ checked: beatValue, 'bg-gray-700': note.slice(0, -1) === root }"
+        :style="{ opacity: (step === sequencer.currentStep - 1 || step - sequencer.currentStep === sequencer.steps - 1) && sequencer.isPlaying ? 0.7 : 1 }"
         class="pad w-8 h-8"
         v-for="(beatValue, step) in sequencer.sequence[index]"
-      />
+      >
+        {{ index === sequencer.notes.length - 1 ? step + 1 : '' }}
+      </div>
     </div>
   </div>
   <div class="mt-8">
-    <primary-button text="Play ⏵" @click="sequencer.play()" v-if="!sequencer.isPlaying" />
-    <success-button text="Playing… ⏸" @click="sequencer.pause()" v-else />
-    <dark-button text="Clean" @click="sequencer.clear()" />
-    <dark-button text="Random" @click="sequencer.random()" />
-    <dark-button text="Invert X" @click="sequencer.invertX()" />
-    <dark-button text="Invert Y" @click="sequencer.invertY()" />
-    <number-input :default-value="sequencer.tempo" v-model="sequencer.tempo"/>
+    <button :class="!sequencer.isPlaying ? BUTTONS.primary : BUTTONS.secondary" class="w-36" @click="sequencer.play()">
+      {{ !sequencer.isPlaying ? `Play ⏵` : `Playing… ⏸` }}
+    </button>
+    <button :class="BUTTONS.dark" class="w-36" @click="sequencer.clear()">
+      Clear
+    </button>
+    <button :class="BUTTONS.dark" class="w-36" @click="sequencer.random()">
+      Random
+    </button>
+    <button :class="BUTTONS.dark" class="w-36" @click="sequencer.invertX()">
+      InvertX
+    </button>
+    <button :class="BUTTONS.dark" class="w-36" @click="sequencer.invertY()">
+      InvertY
+    </button>
+    <input-number class="ml-2" :default-value="sequencer.tempo" v-model="sequencer.tempo"/>
   </div>
   <div class="mt-8">
-    
-  </div>
-  <div>
-    {{ root }}
+    <input-select
+      class="w-36 inline-block"
+      name="note-input"
+      :options="(<unknown>NOTES as string[])"
+      placeholder="Select a root note"
+      v-model="rootIndex"
+    >
+      Root note:
+    </input-select>
+    <input-select
+      class="w-72 ml-2 inline-block"
+      name="scale-input"
+      :options="scaleNames"
+      placeholder="Select a scale"
+      v-model="scaleIndex"
+    >
+      Scale:
+    </input-select>
   </div>
 </template>
 
