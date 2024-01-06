@@ -9,30 +9,36 @@ export interface SequencerInitSettings {
   lowOctave?: number
   steps?: number
   sequence?: boolean[][]
+  noteDuration?: number
   stepLength?: number
 }
 
 export class Sequencer {
   private _sequence: boolean[][] = []
-  private _stepLength = 16
+  private _noteDuration = 8
   private _notes: string[] = []
   private _isPlaying = false
   private _currentStep = 0
   private _tempo = 120
   private _scale: Note[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
   private loop: Tone.Loop | null = null
+  private _stepLength = 4
 
   octaves = 3
   lowOctave = 2
   steps = 16
+  
 
   constructor(options?: SequencerInitSettings) {
-    this._tempo = options?.tempo || this.tempo
-    this._scale = options?.scale || this.scale
-    this._stepLength = options?.stepLength || 16
+    this._tempo = options?.tempo || this._tempo
+    this._scale = options?.scale || this._scale
+    this._noteDuration = options?.noteDuration || this._noteDuration
+    this._stepLength = options?.stepLength || this._stepLength
+
     this.octaves = options?.octaves || this.octaves
     this.lowOctave = options?.lowOctave || this.lowOctave
     this.steps = options?.steps || this.steps
+    
 
     this.createEmptySequence()
 
@@ -41,11 +47,11 @@ export class Sequencer {
     }
   }
 
-  get stepLength(): string {
-    return `${this._stepLength}n`
+  get noteDuration(): string {
+    return `${this._noteDuration}n`
   }
-  set stepLength(step: number) {
-    this._stepLength = step
+  set noteDuration(step: number) {
+    this._noteDuration = step
   }
 
   get notes(): string[] {
@@ -53,6 +59,8 @@ export class Sequencer {
   }
   private set notes(notes: string[]) {
     this._notes = notes
+
+    const currentSequencePlusNewNotes = this.sequence.map(note => [...note, ...Array(this.steps).fill(false)])
   }
 
   get isPlaying(): boolean {
@@ -94,6 +102,15 @@ export class Sequencer {
     Tone.Transport.bpm.value = tempo
   }
 
+  get stepLength(): string {
+    return `${this._stepLength}n`
+  }
+  set stepLength(stepLength: string) {
+    this.pausePlay(() => {
+      this._stepLength = parseInt(stepLength)
+    })
+  }
+
   createEmptySequence(): void {
     this.notes = this.getSortedSequence()
     
@@ -114,27 +131,32 @@ export class Sequencer {
 
       return
     }
-
+  
     const polySynth = new Tone.PolySynth(Tone.Synth).toDestination()
 
     Tone.Transport.bpm.value = this.tempo!
     Tone.start()
-    
+  
+    // Calculate the loop interval based on stepLength.
+    // For instance, '4n' for quarter note, '8n' for eighth note, etc.
+  
     this.loop = new Tone.Loop(time => {
       this.sequence.forEach((note, index) => {
         if (note[this.currentStep]) {
-          polySynth.triggerAttackRelease(this.notes[index], this.stepLength, time)
+          polySynth.triggerAttackRelease(this.notes[index], this.noteDuration, time)
         }
       })
-
-      this.currentStep = this.currentStep < this.steps - 1 ? this.currentStep + 1 : 0
-    })
-
+  
+      // Update currentStep based on stepLength.
+      this.currentStep = (this.currentStep + 1) % this.steps;
+    }, this.stepLength)
+  
     this.loop.start(0)
     Tone.Transport.start()
-    
+  
     this.isPlaying = true
   }
+  
 
   pause(): void {
     if (!this.loop) return
@@ -144,6 +166,16 @@ export class Sequencer {
 
     this.loop = null
     this.isPlaying = false
+  }
+
+  pausePlay(callback: Function) {
+    const wasPlaying = this.isPlaying
+
+    if (wasPlaying) this.pause()
+
+    callback()
+
+    if (wasPlaying) this.play()
   }
 
   clear(): void {

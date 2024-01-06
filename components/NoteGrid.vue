@@ -1,10 +1,13 @@
 <script setup lang="ts">
+// `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
 import { NOTES, SCALES, scaleNames, calculateNotes } from 'mutsica'
 import { Sequencer } from '~/assets/lib/tsequencer'
 import { BUTTONS } from '~/assets/style';
 
 const rootIndex = ref(0)
 const scaleIndex = ref(0)
+const stepLength = ref(2)
+const noteDuration = ref(2)
 const root = computed(() => NOTES[rootIndex.value])
 const scale = computed(() => {
   const scaleName = scaleNames[scaleIndex.value]
@@ -13,11 +16,17 @@ const scale = computed(() => {
   return calculateNotes(root.value, template)
 })
 
-const sequencer = ref<Sequencer>(new Sequencer({ scale: scale.value, steps: 32, stepLength: 32 }))
-const s = `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
+const sequencer = ref<Sequencer>(new Sequencer({ scale: scale.value, steps: 32 }))
+
 
 watch(scale, () => {
   sequencer.value.scale = scale.value
+})
+watch(stepLength, () => {
+  sequencer.value.stepLength = [1, 2, 4, 8, 16][stepLength.value].toString()
+})
+watch(noteDuration, () => {
+  sequencer.value.noteDuration = [1, 2, 4, 8, 16][noteDuration.value].toString()
 })
 </script>
 
@@ -31,7 +40,11 @@ watch(scale, () => {
         @click="sequencer.togglePadValue(index, step)"
         :id="`${note}_${step}`"
         :key="`pad_${note}_${step}`"
-        :class="{ checked: beatValue, 'bg-gray-700': note.slice(0, -1) === root }"
+        :class="{
+          'bg-gray-700': note.slice(0, -1) === root,
+          'bg-violet-400': !(step % (sequencer.steps / 4)) && !beatValue,
+          'bg-purple-900': beatValue,
+        }"
         :style="{ opacity: (step === sequencer.currentStep - 1 || step - sequencer.currentStep === sequencer.steps - 1) && sequencer.isPlaying ? 0.7 : 1 }"
         class="pad w-8 h-8"
         v-for="(beatValue, step) in sequencer.sequence[index]"
@@ -78,6 +91,20 @@ watch(scale, () => {
       Scale:
     </input-select>
   </div>
+  <div class="mt-8">
+    <button-selector
+      :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
+      v-model="stepLength"
+    >Step length:</button-selector>
+  </div>
+  <div class="mt-8">
+    <button-selector
+      :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
+      v-model="noteDuration"
+    >
+      Note duration:
+    </button-selector>
+  </div>
 </template>
 
 <style>
@@ -92,16 +119,8 @@ watch(scale, () => {
   border-radius: 3px;
   transition: background-color 0.1s linear, border-color 0.1s linear; 
 }
-.pad.checked {
-  background-color: #b03137 !important;
-  border-color: #b03137 !important;
-}
 .pad:first-of-type {
   margin-left: 0px;
-}
-.pad:nth-of-type(8n+1) {
-  background-color: rgb(100, 167, 143);
-  border-color: rgb(100, 167, 143);
 }
 .playhead {
   position: absolute;
