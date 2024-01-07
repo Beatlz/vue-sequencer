@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
 import { NOTES, SCALES, scaleNames, calculateNotes } from 'mutsica'
+import { Player } from '~/assets/lib/Player';
 import { Sequencer } from '~/assets/lib/tsequencer'
 import { BUTTONS } from '~/assets/style';
 
@@ -17,7 +18,12 @@ const scale = computed(() => {
 })
 
 const sequencer = ref<Sequencer>(new Sequencer({ scale: scale.value, steps: 32 }))
+const player = new Player()
+const playerRef = ref(player)
 
+playerRef.value.grid.random()
+
+// player.value.grid.random()
 
 watch(scale, () => {
   sequencer.value.scale = scale.value

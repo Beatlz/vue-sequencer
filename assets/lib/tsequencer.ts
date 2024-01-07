@@ -59,8 +59,6 @@ export class Sequencer {
   }
   private set notes(notes: string[]) {
     this._notes = notes
-
-    const currentSequencePlusNewNotes = this.sequence.map(note => [...note, ...Array(this.steps).fill(false)])
   }
 
   get isPlaying(): boolean {
