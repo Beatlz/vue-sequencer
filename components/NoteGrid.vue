@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
-import { NOTES, SCALES, scaleNames, calculateNotes } from 'mutsica'
-import { Player } from '~/assets/lib/Player';
+import { NOTES, SCALES, scaleNames, calculateNotes, getScale } from 'mutsica'
+import { SequencePlayer } from '~/assets/lib/SequencePlayer';
+import { Grid } from '~/assets/lib/Grid';
 import { Sequencer } from '~/assets/lib/tsequencer'
 import { BUTTONS } from '~/assets/style';
 
@@ -18,12 +19,12 @@ const scale = computed(() => {
 })
 
 const sequencer = ref<Sequencer>(new Sequencer({ scale: scale.value, steps: 32 }))
-const player = new Player()
-const playerRef = ref(player)
+const tones = getScale('D#', 'maj')
+const player = new SequencePlayer({ tones, steps: 8 })
 
-playerRef.value.grid.random()
+player.random()
 
-// player.value.grid.random()
+console.log(player.sequences)
 
 watch(scale, () => {
   sequencer.value.scale = scale.value
@@ -37,30 +38,30 @@ watch(noteDuration, () => {
 </script>
 
 <template>
-  <div v-for="(note, index) in sequencer.notes" :key="`note_row_${note}`" class="flex h-10">
+  <div v-for="(note, x) in (player.notes() as string[])" :key="`note_row_${note}`" class="flex h-10">
     <div class="w-12 flex items-center justify-center">
       {{ note }}
     </div>
     <div class="flex items-center justify-center">
       <div
-        @click="sequencer.togglePadValue(index, step)"
-        :id="`${note}_${step}`"
-        :key="`pad_${note}_${step}`"
+        v-for="(beatValue, y) in sequencer.sequence[x]"
+        @click="player.togglePad(x, y)"
+        :id="`${note}_${y}`"
+        :key="`pad_${note}_${y}`"
         :class="{
           'bg-gray-700': note.slice(0, -1) === root,
-          'bg-violet-400': !(step % (sequencer.steps / 4)) && !beatValue,
+          'bg-violet-400': !(y % (player.steps / 4)) && !beatValue,
           'bg-purple-900': beatValue,
         }"
-        :style="{ opacity: (step === sequencer.currentStep - 1 || step - sequencer.currentStep === sequencer.steps - 1) && sequencer.isPlaying ? 0.7 : 1 }"
+        :style="{ opacity: (y === player.currentStep - 1 || y - player.currentStep === player.steps - 1) && player.isPlaying ? 0.7 : 1 }"
         class="pad w-8 h-8"
-        v-for="(beatValue, step) in sequencer.sequence[index]"
       >
-        {{ index === sequencer.notes.length - 1 ? step + 1 : '' }}
+        {{ x === sequencer.notes.length - 1 ? y + 1 : '' }}
       </div>
     </div>
   </div>
   <div class="mt-8">
-    <button :class="!sequencer.isPlaying ? BUTTONS.primary : BUTTONS.secondary" class="w-36" @click="sequencer.play()">
+    <button :class="!sequencer.isPlaying ? BUTTONS.primary : BUTTONS.secondary" class="w-36" @click="player.play()">
       {{ !sequencer.isPlaying ? `Play ⏵` : `Playing… ⏸` }}
     </button>
     <button :class="BUTTONS.dark" class="w-36" @click="sequencer.clear()">
@@ -69,7 +70,7 @@ watch(noteDuration, () => {
     <button :class="BUTTONS.dark" class="w-36" @click="sequencer.random()">
       Random
     </button>
-    <button :class="BUTTONS.dark" class="w-36" @click="sequencer.invertX()">
+    <button :class="BUTTONS.dark" class="w-36" @click="player.invertX()">
       InvertX
     </button>
     <button :class="BUTTONS.dark" class="w-36" @click="sequencer.invertY()">

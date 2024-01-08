@@ -10,7 +10,8 @@ export interface GridSettings {
 }
 
 export class Grid {
-  sequence: Pad[][] = []
+  private _sequence: Pad[][] = []
+
   steps = 32
   tones: Note[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
   lowOctave = 2
@@ -18,7 +19,7 @@ export class Grid {
 
   constructor(sequence?: Pad[][] | GridSettings) {
     if (sequence instanceof Array) {
-      this.sequence = sequence
+      this._sequence = sequence
     } else {
       this.steps = sequence?.steps || this.steps
       this.tones = sequence?.tones || this.tones
@@ -29,25 +30,44 @@ export class Grid {
     }
   }
 
-  getPad(x: number, y: number): Pad {
-    return this.sequence[x][y]
+  get sequence(): Pad[][] {
+    return this._sequence
   }
-  setPad(x: number, y: number, pad: Pad): void {
-    this.sequence[x][y] = pad
+  set sequence(sequence: Pad[][]) {
+    this._sequence = sequence
   }
 
   togglePad(x: number, y: number, setAs?: boolean): void {
-    this.getPad(x, y).isActive = setAs !== undefined ? setAs : !this.getPad(x, y).isActive  
+    this.sequence[x][y].isActive = setAs !== undefined
+      ? setAs
+      : !this.sequence[x][y].isActive
   }
 
   create(): void {
-    this.sequence = this.notes().map(note => Array(this.steps).fill({ note, duration: `4n`, isActive: false }))
+    this.sequence = this.notes().map(note =>
+      Array.from({ length: this.steps }, () => ({
+        note,
+        duration: `16n`,
+        isActive: false,
+        velocity: 0.5
+      }))
+    );
   }
 
   clear(): void {
-    for (const row of this.sequence) {
-      row.forEach(pad => pad.isActive = false)
-    }
+    this.sequence.forEach((_, row) => {
+      this.sequence[row].forEach((__, beat) => {
+        this.togglePad(row, beat, false)
+      })
+    })
+  }
+
+  random(threshold = 0.05): void {
+    this.sequence.forEach((pads, x) => {
+      pads.forEach((_, y) => {
+        this.togglePad(x, y, Math.random() < threshold)
+      })
+    })
   }
 
   invertX(): void {
@@ -56,18 +76,6 @@ export class Grid {
 
   invertY(): void {
     this.sequence = this.sequence.map((_, index) => this.sequence[this.sequence.length - index - 1])
-  }
-
-  random(randomThreshold = 0.05): void {
-    for (const row of this.sequence) {
-      row.forEach(pad => {
-        pad.isActive = Math.random() < randomThreshold
-
-        if (pad.isActive) {
-          console.log(pad)
-        }
-      })
-    }
   }
 
   notes(): Frequency[] {
