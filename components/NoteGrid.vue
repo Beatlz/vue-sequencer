@@ -28,7 +28,6 @@ watch(stepLength, () => {
   sequencer.value.stepLength = [1, 2, 4, 8, 16][stepLength.value].toString()
 })
 watch(noteDuration, () => {
-  // sequencer.value.noteDuration = [1, 2, 4, 8, 16][noteDuration.value].toString()
   pads.value.matrix.forEach((row) => {
     row.forEach((pad) => {
       pad.duration = [`1n`, `2n`, `4n`, `8n`, `16n`][noteDuration.value].toString()
