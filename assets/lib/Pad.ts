@@ -10,6 +10,6 @@ export interface Pad {
 export const PAD = {
   tone: ``,
   duration: `8n`,
-  velocity: 1,
+  velocity: 0.75,
   isActive: false
 }

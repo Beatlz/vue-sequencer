@@ -1,7 +1,8 @@
 import type { Frequency } from "tone/build/esm/core/type/Units";
 import { PAD, type Pad } from "./Pad";
+import { Synth, now } from "tone";
 
-const DEFAULT_TONES = 21
+let synth: Synth | null = null
 
 export interface PadSettings {
   steps: number
@@ -43,10 +44,19 @@ export class Pads {
     if (this.matrix) this.updateTones()
   }
 
-  togglePad(x: number, y: number, setAs?: boolean): void {
-    this.matrix[x][y].isActive = setAs !== undefined
+  togglePad(row: number, beat: number, setAs?: boolean): void {
+    this.matrix[row][beat].isActive = setAs !== undefined
       ? setAs
-      : !this.matrix[x][y].isActive
+      : !this.matrix[row][beat].isActive
+  }
+
+  playPad(row: number, beat: number): void {
+    const tone = this.matrix[row][beat].tone || this.tones[row]
+    const duration = this.matrix[row][beat].duration
+
+    if (!synth) synth = new Synth().toDestination();
+    
+    synth.triggerAttackRelease(tone, duration);
   }
 
   createMatrix(): void {
@@ -76,9 +86,9 @@ export class Pads {
   }
 
   random(threshold = 0.05): void {
-    this.matrix.forEach((pads, x) => {
-      pads.forEach((pad, y) => {
-        this.togglePad(x, y, Math.random() < threshold)
+    this.matrix.forEach((pads, row) => {
+      pads.forEach((_, beat) => {
+        this.togglePad(row, beat, Math.random() < threshold)
       })
     })
   }
@@ -103,6 +113,14 @@ export class Pads {
       const octave = Number((<string>tone).match(onlyNumberRegex))
 
       return (<string>tone).replace(onlyNumberRegex, String(octave + octaves))
+    })
+  }
+
+  humanize(threshold = [0.4, 1]): void {
+    this.matrix.forEach((pads) => {
+      pads.forEach((pad) => {
+        pad.velocity = Math.random() * (threshold[1] - threshold[0]) + threshold[0]
+      })
     })
   }
 }

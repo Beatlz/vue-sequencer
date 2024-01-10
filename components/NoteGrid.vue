@@ -21,6 +21,12 @@ const scale = computed(() => {
 const sequencer = ref<PadsController>(new PadsController({ scale: scale.value }))
 const pads = ref<Pads>(sequencer.value.pads as Pads)
 
+const handlePad = (row: number, step: number) => {
+  if (!pads.value.matrix[row][step].isActive) pads.value.playPad(row, step)
+
+  pads.value.togglePad(row, step)
+}
+
 watch(scale, () => {
   sequencer.value.scale = scale.value
 })
@@ -44,7 +50,7 @@ watch(noteDuration, () => {
     <div class="flex items-center justify-center">
       <div
         v-for="(pad, step) in pads.matrix[row]"
-        @click="pads.togglePad(row, step)"
+        @click="handlePad(row, step)"
         :id="`${tone}_${step}`"
         :key="`pad_${tone}_${step}`"
         :class="{
@@ -60,57 +66,66 @@ watch(noteDuration, () => {
       </div>
     </div>
   </div>
-  <div class="mt-8">
-    <button :class="!sequencer.isPlaying ? BUTTONS.primary : BUTTONS.secondary" class="w-36" @click="sequencer.play()">
-      {{ !sequencer.isPlaying ? `Play ⏵` : `Playing… ⏸` }}
-    </button>
-    <button :class="BUTTONS.dark" class="w-36" @click="pads.clear()">
-      Clear
-    </button>
-    <button :class="BUTTONS.dark" class="w-36" @click="pads.random()">
-      Random
-    </button>
-    <button :class="BUTTONS.dark" class="w-36" @click="pads.invertX()">
-      InvertX
-    </button>
-    <button :class="BUTTONS.dark" class="w-36" @click="pads.invertY()">
-      InvertY
-    </button>
-    <input-number class="ml-2" :default-value="sequencer.tempo" v-model="sequencer.tempo"/>
-  </div>
-  <div class="mt-8">
-    <input-select
-      class="w-36 inline-block"
-      name="note-input"
-      :options="(<unknown>NOTE_NAMES as string[])"
-      placeholder="Select a root note"
-      v-model="rootIndex"
-    >
-      Root note:
-    </input-select>
-    <input-select
-      class="w-72 ml-2 inline-block"
-      name="scale-input"
-      :options="scaleNames"
-      placeholder="Select a scale"
-      v-model="scaleIndex"
-    >
-      Scale:
-    </input-select>
-  </div>
-  <div class="mt-8">
-    <button-selector
-      :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
-      v-model="stepLength"
-    >Step length:</button-selector>
-  </div>
-  <div class="mt-8">
-    <button-selector
-      :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
-      v-model="noteDuration"
-    >
-      Note duration:
-    </button-selector>
+  <div class="p-4">
+    <div class="mt-8">
+      <input-number :default-value="sequencer.tempo" v-model="sequencer.tempo">
+        Tempo:
+      </input-number>
+    </div>
+    <div class="mt-8">
+      <button :class="!sequencer.isPlaying ? BUTTONS.primary : BUTTONS.secondary" class="w-36" @click="sequencer.play()">
+        {{ !sequencer.isPlaying ? `Play ⏵` : `Playing… ⏸` }}
+      </button>
+      <button :class="BUTTONS.dark" @click="pads.clear()" class="w-36">
+        Clear
+      </button>
+      <button :class="BUTTONS.dark" @click="pads.random()" class="w-36">
+        Random
+      </button>
+      <button :class="BUTTONS.dark" @click="pads.invertX()" class="w-36">
+        InvertX
+      </button>
+      <button :class="BUTTONS.dark" @click="pads.invertY()" class="w-36">
+        InvertY
+      </button>
+      <button :class="BUTTONS.dark" @click="pads.humanize()" class="w-36">
+        Humanize
+      </button>
+    </div>
+    <div class="mt-8">
+      <input-select
+        class="w-36 inline-block"
+        name="note-input"
+        :options="(<unknown>NOTE_NAMES as string[])"
+        placeholder="Select a root note"
+        v-model="rootIndex"
+      >
+        Root note:
+      </input-select>
+      <input-select
+        class="w-72 ml-2 inline-block"
+        name="scale-input"
+        :options="scaleNames"
+        placeholder="Select a scale"
+        v-model="scaleIndex"
+      >
+        Scale:
+      </input-select>
+    </div>
+    <div class="mt-8">
+      <button-selector
+        :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
+        v-model="stepLength"
+      >Step length:</button-selector>
+    </div>
+    <div class="mt-8">
+      <button-selector
+        :options="[`1`, `1/2`, `1/4`, `1/8`, `1/16`]"
+        v-model="noteDuration"
+      >
+        Note duration:
+      </button-selector>
+    </div>
   </div>
 </template>
 

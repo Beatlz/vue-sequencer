@@ -4,6 +4,8 @@ import { getSortedNotes, type NoteName } from "mutsica"
 import { Pads } from "./Pads"
 import type { Time } from "tone/build/esm/core/type/Units"
 
+let polySynth: Tone.PolySynth | null = null
+
 export interface SequencerInitSettings {
   tempo?: number
   scale?: NoteName[]
@@ -86,7 +88,7 @@ export class PadsController {
       return
     }
   
-    const polySynth = new Tone.PolySynth(Tone.Synth).toDestination()
+    if (!polySynth) polySynth = new Tone.PolySynth(Tone.Synth).toDestination()
 
     Tone.Transport.bpm.value = this.tempo!
     Tone.start()
@@ -96,7 +98,7 @@ export class PadsController {
         const pad = row[this.currentStep]
         
         if (pad.isActive) {
-          polySynth.triggerAttackRelease(pad.tone || this.pads.tones[index], pad.duration, time, pad.velocity)
+          polySynth?.triggerAttackRelease(pad.tone || this.pads.tones[index], pad.duration, time, pad.velocity)
         }
       })
   
