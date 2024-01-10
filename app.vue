@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { initFlowbite } from 'flowbite';
+import Sequencer from '~/layouts/Sequencer.vue';
 
 const isMounted = ref(false)
 
@@ -11,7 +12,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <note-grid v-if="isMounted" />
+    <sequencer v-if="isMounted" />
   </div>
 </template>
 
