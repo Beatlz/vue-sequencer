@@ -13,7 +13,7 @@ export class ChordPad {
   tones: Frequency[] = []
   duration: Time = `8n`
   time: number = 0
-  velocity: number = 0.75
+  velocity: number = 0.7
   synth: PolySynth | null = null
 
   constructor(settings: ChordPadSettings) {
