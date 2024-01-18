@@ -1,24 +1,25 @@
 <script setup lang="ts">
 // `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
-import { NOTE_NAMES, SCALES, scaleNames, calculateNotes, Scale } from 'mutsica'
+import { NOTE_NAMES, SCALES, SCALE_NAMES, calculateNotes } from 'mutsica'
 
-import { PadsController } from "~/assets/lib/PadsController"
+import { SequencerPlayer } from "~/assets/lib/SequencerPlayer"
 import type { Pads } from "~/assets/lib/Pads"
 import { BUTTONS } from '~/assets/style';
 
+const scaleNames = [...SCALE_NAMES]
 const rootIndex = ref(0)
 const scaleIndex = ref(0)
 const stepLength = ref(2)
 const noteDuration = ref(2)
 const root = computed(() => NOTE_NAMES[rootIndex.value])
 const scale = computed(() => {
-  const scaleName = scaleNames[scaleIndex.value]
+  const scaleName = SCALE_NAMES[scaleIndex.value]
   const template = SCALES[scaleName].template
 
   return calculateNotes(root.value, template)
 })
 
-const sequencer = ref<PadsController>(new PadsController({ scale: scale.value, steps: 32 }))
+const sequencer = ref<SequencerPlayer>(new SequencerPlayer({ scale: scale.value, steps: 32 }))
 const pads = ref<Pads>(sequencer.value.pads as Pads)
 
 const handlePad = (row: number, step: number) => {
@@ -59,7 +60,11 @@ watch(noteDuration, () => {
           'bg-purple-900': pad.isActive,
           'bg-red-600': pad.tone && pad.tone !== tone,
         }"
-        :style="{ opacity: (step === sequencer.currentStep - 1 || step - sequencer.currentStep === sequencer.steps - 1) && sequencer.isPlaying ? 0.7 : 1 }"
+        :style="{
+          opacity: (step === sequencer.currentStep - 1 || step - sequencer.currentStep === sequencer.steps - 1) && sequencer.isPlaying
+            ? 0.7
+            : 1
+        }"
         class="pad w-8 h-8 bg-gray-500 border border-gray-300"
       >
         {{ row === pads.tones.length - 1 ? step + 1 : '' }}

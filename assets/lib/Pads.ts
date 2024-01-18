@@ -1,6 +1,6 @@
 import type { Frequency } from "tone/build/esm/core/type/Units";
 import { PAD, type Pad } from "./Pad";
-import { Synth, now } from "tone";
+import { Synth } from "tone";
 
 let synth: Synth | null = null
 
