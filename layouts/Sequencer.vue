@@ -2,7 +2,7 @@
 // `text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800`
 import { NOTE_NAMES, SCALES, SCALE_NAMES, calculateNotes } from 'mutsica'
 
-import { PadsController } from "~/assets/lib/PadsController"
+import { SequencerPlayer } from "~/assets/lib/SequencerPlayer"
 import type { Pads } from "~/assets/lib/Pads"
 import { BUTTONS } from '~/assets/style';
 
@@ -19,7 +19,7 @@ const scale = computed(() => {
   return calculateNotes(root.value, template)
 })
 
-const sequencer = ref<PadsController>(new PadsController({ scale: scale.value, steps: 32 }))
+const sequencer = ref<SequencerPlayer>(new SequencerPlayer({ scale: scale.value, steps: 32 }))
 const pads = ref<Pads>(sequencer.value.pads as Pads)
 
 const handlePad = (row: number, step: number) => {

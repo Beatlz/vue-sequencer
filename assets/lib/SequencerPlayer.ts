@@ -17,7 +17,7 @@ export interface SequencerInitSettings {
   stepLength?: number
 }
 
-export class PadsController {
+export class SequencerPlayer {
   private _isPlaying = false
   private _currentStep = 0
   private _tempo = 120

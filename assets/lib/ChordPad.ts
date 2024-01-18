@@ -1,31 +1,49 @@
 import { PolySynth, Transport } from "tone"
-import type { Frequency, Time } from "tone/build/esm/core/type/Units"
+import type { Time } from "tone/build/esm/core/type/Units"
+import type { Pad } from "./Pad"
 
 export interface ChordPadSettings {
-  tones: Frequency[]
+  pads: Pad[]
   velocity?: number
   duration?: Time
   snyth?: PolySynth
   time?: number
 }
 
+export interface ChordPlaySettings {
+  roll?: {
+    delay: number
+    direction?: `up` | `down` | `random`
+  }
+}
+
 export class ChordPad {
-  tones: Frequency[] = []
+  pads: Pad[] = []
   duration: Time = `8n`
   time: number = 0
-  velocity: number = 0.7
+  velocity: number = 0.3
   synth: PolySynth | null = null
 
   constructor(settings: ChordPadSettings) {
     Object.assign(this, settings)
   }
 
-  play(): void {
+  play(settings: ChordPlaySettings  = {}): void {
     if (!this.synth) this.synth = new PolySynth().toDestination()
 
-    const { duration, velocity } = this
+    const { roll } = settings
+    const tones: Pad[] = roll?.direction === 'down'
+      ? this.pads
+      : roll?.direction === 'random'
+        ? this.pads.sort(() => Math.random() - 0.5)
+        : [...this.pads].reverse()
 
-    this.synth?.triggerAttackRelease(this.tones, duration, undefined, velocity)
+    tones.forEach((pad, index) => {
+      const delay = roll ? roll.delay : 0
+      const timeDelay = (Transport.seconds || this.time) + index * delay
+
+      this.synth?.triggerAttackRelease(pad.tone!, pad.duration, timeDelay, pad.velocity);
+    })
 
     if (Transport.state !== `started`) Transport.start()
   }
